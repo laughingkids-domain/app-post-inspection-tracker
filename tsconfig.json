@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react-native",
+    "lib": ["es2015", "es2016"],
+    "noEmit": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  }
+}
