@@ -4,8 +4,10 @@ import {
   FooterTab,
   Icon,
   Button,
-  Text
+  Text,
+  Body
 } from "native-base";
+import { StyleSheet } from "react-native";
 import { Link, withRouter, RouteComponentProps } from "react-router-native";
 
 interface IFooterProps extends RouteComponentProps {}
@@ -20,38 +22,56 @@ export function Footer(props: IFooterProps) {
     <BaseFooter>
       <FooterTab>
         <Button vertical active={isActiveFooterTab(location, "/")}>
-          <Icon name="search" />
-          <Link to={`/`} underlayColor="#f0f4f7">
-            <Text>Search</Text>
+          <Link to={`/`} underlayColor="transparent">
+            <Body>
+              <Icon name="search" />
+              <Text style={[s.text]}>Search</Text>
+            </Body>
           </Link>
         </Button>
         <Button vertical active={isActiveFooterTab(location, "/shortlist")}>
-          <Icon name="star" />
-          <Link to={`/shortlist`} underlayColor="#f0f4f7">
-            <Text>Shortlist</Text>
+          <Link to={`/shortlist`} underlayColor="transparent">
+            <Body>
+              <Icon name="star" />
+              <Text style={[s.text]}>Shortlist</Text>
+            </Body>
           </Link>
         </Button>
+
         <Button vertical active={isActiveFooterTab(location, "/saved")}>
-          <Icon name="ios-cloud" />
-          <Link to={`/saved`} underlayColor="#f0f4f7">
-            <Text>Saved</Text>
+          <Link to={`/saved`} underlayColor="transparent">
+            <Body>
+              <Icon name="ios-cloud" />
+              <Text style={[s.text]}>Saved</Text>
+            </Body>
           </Link>
         </Button>
         <Button vertical active={isActiveFooterTab(location, "/owners")}>
-          <Icon active name="home" />
-          <Link to={`/owners`} underlayColor="red">
-            <Text>Owners</Text>
+          <Link to={`/owners`} underlayColor="transparent">
+            <Body>
+              <Icon active name="home" />
+              <Text style={[s.text]}>Owners</Text>
+            </Body>
           </Link>
         </Button>
         <Button vertical active={isActiveFooterTab(location, "/more")}>
-          <Icon name="more" />
-          <Link to={`/more`} underlayColor="#f0f4f7">
-            <Text>More</Text>
+          <Link to={`/more`} underlayColor="transparent">
+            <Body>
+              <Icon name="more" />
+              <Text style={[s.text]}>More</Text>
+            </Body>
           </Link>
         </Button>
       </FooterTab>
     </BaseFooter>
   );
 }
+
+const s = StyleSheet.create({
+  text: {
+    textAlign: "center",
+    fontSize: 9
+  }
+});
 
 export default withRouter(Footer);

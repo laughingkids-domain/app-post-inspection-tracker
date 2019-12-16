@@ -1,11 +1,29 @@
 import React from "react";
-import { Content, Text } from "native-base";
+import { Container } from "native-base";
+import Header from "../../../Components/Header/Header";
+import PropertyCard from "../../../Components/PropertyCard/PropertyCard";
 
-export default function OwnersHomepage() {
+interface IOwnerHomeProps {
+  listings: any[];
+}
+
+const mockListing = [
+  {
+    openHometime: "2020-01-01"
+  }
+];
+
+export default function OwnersHomepage(props: IOwnerHomeProps) {
+  const { listings } = props;
   return (
-    <Content>
-      <Text>Owners</Text>
-    </Content>
+    <Container>
+      <Header title={"Owners"} subtitle={"Preview Mode"} />
+      {listings ||
+        mockListing.map(listing => {
+          const underInspection = listing.openHometime === "2020-01-01";
+          return <PropertyCard underInspection={underInspection} />;
+        })}
+    </Container>
   );
 }
 

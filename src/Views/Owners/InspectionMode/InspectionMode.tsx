@@ -1,12 +1,11 @@
 import React from "react";
-import { Container, Text } from "native-base";
+import { Container } from "native-base";
 import Header from "../../../Components/Header/Header";
 
-export default function SavedHomePage() {
+export default function InspectionMode() {
   return (
     <Container>
-      <Header title={"Saved Listing"} />
-      <Text>Saved</Text>
+      <Header title={"Owners"} subtitle={"Inspection Mode"} />
     </Container>
   );
 }

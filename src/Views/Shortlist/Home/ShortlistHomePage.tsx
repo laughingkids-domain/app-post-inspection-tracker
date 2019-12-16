@@ -1,10 +1,12 @@
 import React from "react";
-import { Content, Text } from "native-base";
+import { Container, Text } from "native-base";
+import Header from "../../../Components/Header/Header";
 
 export default function ShortlistHomePage() {
   return (
-    <Content>
+    <Container>
+      <Header title={"Shortlist"} />
       <Text>Shortlist</Text>
-    </Content>
+    </Container>
   );
 }

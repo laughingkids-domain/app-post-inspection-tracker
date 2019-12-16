@@ -1,10 +1,12 @@
 import React from "react";
-import { Content, Text } from "native-base";
+import { Container, Text } from "native-base";
+import Header from "../../../Components/Header/Header";
 
 export default function MoreHomePage() {
   return (
-    <Content>
+    <Container>
+      <Header title={"More"} />
       <Text>More</Text>
-    </Content>
+    </Container>
   );
 }

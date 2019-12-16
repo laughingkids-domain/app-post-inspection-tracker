@@ -1,10 +1,12 @@
 import React from "react";
-import { Content, Text } from "native-base";
+import { Container, Text } from "native-base";
+import Header from "../../../Components/Header/Header";
 
 export default function SearchHomePage() {
   return (
-    <Content>
+    <Container>
+      <Header title={"Search"} />
       <Text>Search</Text>
-    </Content>
+    </Container>
   );
 }
