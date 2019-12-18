@@ -1,25 +1,36 @@
 import React from "react";
-import { Text, Content } from "native-base";
+import { Text, Content, Left, Thumbnail, Body, Right } from "native-base";
 
 interface Address {
-  stateAbbreviation: String;
-  displayType: String;
-  streetNumber: String;
-  street: String;
-  suburb: String;
-  postcode: String;
-  displayAddress: String;
+  stateAbbreviation: string;
+  displayType: string;
+  streetNumber: string;
+  street: string;
+  suburb: string;
+  postcode: string;
+  displayAddress: string;
 }
+
+export interface Inspection {
+  closingDateTime: string;
+  openingDateTime: string;
+}
+
 export interface IListingDetail {
   id: string;
-  bathrooms: number;
-  bedrooms: number;
-  carspaces: number;
-  addressParts: Address;
+  bathrooms?: number;
+  bedrooms?: number;
+  carspaces?: number;
+  addressParts?: Address;
   attendUserIds?: number[];
+  inspectionDetails?: {
+    inspections?: Inspection[];
+    pastInspections?: Inspection[];
+  };
 }
 export interface PropertyCardExtend {
-  underInspection: boolean;
+  underInspection?: boolean;
+  media?: any[];
 }
 
 export interface IPropertyCardProps {
@@ -27,11 +38,48 @@ export interface IPropertyCardProps {
 }
 
 export default function PropertyCard(props: IPropertyCardProps) {
-  const { bathrooms, underInspection, addressParts } = props.listing;
+  const { listing } = props;
+  const { bathrooms, bedrooms, carspaces, addressParts } = listing;
+  const nextInspection = listing.inspectionDetails.inspections.find(
+    inspection => {
+      const today = new Date("2019-12-28T01:10:00.000Z");
+      const inspectionStart = new Date(inspection.openingDateTime);
+      const inspectionEnd = new Date(inspection.closingDateTime);
+      return today <= inspectionEnd && today >= inspectionStart;
+    }
+  );
+  const highlight = `bedrooms:${bedrooms}, bathrooms:${bathrooms}, carspaces:${carspaces}`;
+  const finishAt = nextInspection && new Date(nextInspection.closingDateTime);
+  const thumbnail = listing.media.filter(media => media.type === "photo");
+  const {
+    streetNumber,
+    street,
+    suburb,
+    stateAbbreviation,
+    postcode
+  } = addressParts;
   return (
-    <Content>
-      <Text>{addressParts.displayAddress}</Text>
-      <Text>{bathrooms}</Text>
-    </Content>
+    <>
+      <Left>
+        <Thumbnail square source={{ uri: thumbnail[0].url }} />
+      </Left>
+      <Body>
+        <Text>
+          {streetNumber} {street},
+        </Text>
+        <Text>
+          {suburb} {postcode} {stateAbbreviation.toUpperCase()}
+        </Text>
+        {finishAt ? (
+          <Text>Inspection will end at {finishAt.toLocaleTimeString()}</Text>
+        ) : (
+          <>
+            <Text>{`bedrooms:${bedrooms}, bathrooms:${bathrooms}`}</Text>
+            <Text>{`carspaces:${carspaces}`}</Text>
+          </>
+        )}
+      </Body>
+      <Right />
+    </>
   );
 }

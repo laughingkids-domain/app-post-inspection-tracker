@@ -6,7 +6,7 @@ import gql from "graphql-tag";
 import Header from "../../../Components/Header/Header";
 import userDetailsQuery from "../../../GraphQL/Queries/UserDetailsQuery";
 import PropertyCard from "../../../Components/PropertyCard/PropertyCard";
-import { Link } from "react-router-native";
+import { Link, useHistory } from "react-router-native";
 
 interface IOwnerHomeProps {
   userPropertyData: any;
@@ -36,21 +36,12 @@ const sortListingByUnderInspection = (one, another) =>
   Number(porpertyIsUnderInspection(another)) -
   Number(porpertyIsUnderInspection(one));
 
-const renderPropertyCardInList = (listing, underInspection) => (
-  <Link
-    to={
-      underInspection
-        ? `/owners/property/inspection/${listing.id}`
-        : `/owners/property/ownerview/${listing.id}`
-    }
-  >
-    <PropertyCard
-      listing={{
-        ...listing,
-        underInspection
-      }}
-    />
-  </Link>
+const renderPropertyCardInList = listing => (
+  <PropertyCard
+    listing={{
+      ...listing
+    }}
+  />
 );
 
 const renderPropertyListHeader = name => (
@@ -83,10 +74,12 @@ const injectHeaderInListing = items => {
 
 export default function OwnersHomepage(props: IOwnerHomeProps) {
   const [ownListingCount, setOwnListingCount] = useState(0);
+  const [userName, setUserName] = useState("Owner");
+  let history = useHistory();
   return (
     <Container>
       <Header
-        title={"Owners"}
+        title={userName}
         subtitle={`Owned Properties (${ownListingCount})`}
       />
       <Query
@@ -96,8 +89,9 @@ export default function OwnersHomepage(props: IOwnerHomeProps) {
       >
         {({ loading, error, data }) => {
           if (loading || error) return null;
-          const { ownedProperties } = data.user;
+          const { ownedProperties, firstName, lastName } = data.user;
           setOwnListingCount(ownedProperties.length);
+          setUserName(`${firstName} ${lastName}`);
           const sortedOwnedProperties = injectHeaderInListing([
             ...ownedProperties
           ]);
@@ -113,14 +107,19 @@ export default function OwnersHomepage(props: IOwnerHomeProps) {
               renderItem={(listingItem, index) => {
                 const { item } = listingItem;
                 const underInspection = porpertyIsUnderInspection(item);
+                const detailUrl = underInspection
+                  ? `/owners/property/inspection/${item.id}`
+                  : `/owners/property/ownerview/${item.id}`;
                 return (
                   <ListItem
                     key={item.header ? `header-${index}` : item.id}
                     itemDivider={item.header}
+                    onPress={() => history.push(detailUrl)}
+                    thumbnail={!item.header}
                   >
                     {item.header
                       ? renderPropertyListHeader(item.name)
-                      : renderPropertyCardInList(item, underInspection)}
+                      : renderPropertyCardInList(item)}
                   </ListItem>
                 );
               }}

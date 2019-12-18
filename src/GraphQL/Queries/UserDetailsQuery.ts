@@ -10,6 +10,15 @@ query userDetailsQuery {
       bedrooms
       addressParts {
         displayAddress
+        streetNumber
+        street
+        suburb
+        postcode
+        stateAbbreviation
+      }
+      media {
+        url
+        type
       }
       inspectionDetails {
         inspections {
