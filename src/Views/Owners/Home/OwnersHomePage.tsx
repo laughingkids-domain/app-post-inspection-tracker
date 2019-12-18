@@ -1,14 +1,5 @@
 import React from "react";
-import {
-  Container,
-  List,
-  ListItem,
-  Text,
-  Content,
-  Left,
-  Body,
-  Right
-} from "native-base";
+import { Container, List, ListItem, Text, Body } from "native-base";
 // import { View, FlatList } from "react-native";
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
@@ -68,6 +59,28 @@ const renderPropertyListHeader = name => (
   </Body>
 );
 
+const injectHeaderInListing = items => {
+  if (items.findIndex(item => item.header) < 0) {
+    const sortedOwnedProperties = items.sort(sortListingByUnderInspection);
+
+    const unInspection = sortedOwnedProperties.findIndex(
+      listing => !porpertyIsUnderInspection(listing)
+    );
+
+    sortedOwnedProperties.splice(unInspection, 0, {
+      name: "Not Under Insepction",
+      header: true
+    });
+
+    sortedOwnedProperties.splice(0, 0, {
+      name: "Under Insepction",
+      header: true
+    });
+    return sortedOwnedProperties;
+  }
+  return items;
+};
+
 export default function OwnersHomepage(props: IOwnerHomeProps) {
   return (
     <Query
@@ -78,29 +91,14 @@ export default function OwnersHomepage(props: IOwnerHomeProps) {
       {({ loading, error, data }) => {
         if (loading || error) return null;
         const { ownedProperties } = data.user;
-        const sortedOwnedProperties = ownedProperties.sort(
-          sortListingByUnderInspection
-        );
-        console.log(sortedOwnedProperties.length);
-
-        const unInspection = sortedOwnedProperties.indexOf(
-          sortedOwnedProperties.find(
-            listing => !porpertyIsUnderInspection(listing)
+        const sortedOwnedProperties = injectHeaderInListing([
+          ...ownedProperties
+        ]);
+        const stickyHeaderIndices = [0].concat(
+          sortedOwnedProperties.findIndex(
+            item => item.header && sortedOwnedProperties.indexOf(item) !== 0
           )
         );
-
-        sortedOwnedProperties.splice(unInspection, 0, {
-          name: "Not Under Insepction",
-          header: true
-        });
-
-        sortedOwnedProperties.splice(0, 0, {
-          name: "Under Insepction",
-          header: true
-        });
-
-        console.log(unInspection, sortedOwnedProperties.length);
-
         return (
           <Container>
             <Header
@@ -109,8 +107,8 @@ export default function OwnersHomepage(props: IOwnerHomeProps) {
             />
             <Container>
               <List
-                dataArray={ownedProperties}
-                stickyHeaderIndices={[0, unInspection + 1]}
+                dataArray={sortedOwnedProperties}
+                stickyHeaderIndices={stickyHeaderIndices}
                 renderItem={listingItem => {
                   const { item } = listingItem;
                   const underInspection = porpertyIsUnderInspection(item);
