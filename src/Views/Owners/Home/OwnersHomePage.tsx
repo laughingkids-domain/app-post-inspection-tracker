@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Container, List, ListItem, Text, Body } from "native-base";
 // import { View, FlatList } from "react-native";
 import { Query } from "react-apollo";
@@ -26,7 +26,7 @@ const porpertyIsUnderInspection = listing => {
       const today = new Date();
       const inspectionStart = new Date(inspection.openingDateTime);
       const inspectionEnd = new Date(inspection.closingDateTime);
-      return today < inspectionEnd && today > inspectionStart;
+      return today <= inspectionEnd && today >= inspectionStart;
     }
   );
   return nextInspection >= 0;
@@ -82,49 +82,52 @@ const injectHeaderInListing = items => {
 };
 
 export default function OwnersHomepage(props: IOwnerHomeProps) {
+  const [ownListingCount, setOwnListingCount] = useState(0);
   return (
-    <Query
-      query={gql`
-        ${userDetailsQuery(loginUserId)}
-      `}
-    >
-      {({ loading, error, data }) => {
-        if (loading || error) return null;
-        const { ownedProperties } = data.user;
-        const sortedOwnedProperties = injectHeaderInListing([
-          ...ownedProperties
-        ]);
-        const stickyHeaderIndices = [0].concat(
-          sortedOwnedProperties.findIndex(
-            item => item.header && sortedOwnedProperties.indexOf(item) !== 0
-          )
-        );
-        return (
-          <Container>
-            <Header
-              title={"Owners"}
-              subtitle={`Owned Properties (${ownedProperties.length})`}
+    <Container>
+      <Header
+        title={"Owners"}
+        subtitle={`Owned Properties (${ownListingCount})`}
+      />
+      <Query
+        query={gql`
+          ${userDetailsQuery(loginUserId)}
+        `}
+      >
+        {({ loading, error, data }) => {
+          if (loading || error) return null;
+          const { ownedProperties } = data.user;
+          setOwnListingCount(ownedProperties.length);
+          const sortedOwnedProperties = injectHeaderInListing([
+            ...ownedProperties
+          ]);
+          const stickyHeaderIndices = [0].concat(
+            sortedOwnedProperties.findIndex(
+              item => item.header && sortedOwnedProperties.indexOf(item) !== 0
+            )
+          );
+          return (
+            <List
+              dataArray={sortedOwnedProperties}
+              stickyHeaderIndices={stickyHeaderIndices}
+              renderItem={(listingItem, index) => {
+                const { item } = listingItem;
+                const underInspection = porpertyIsUnderInspection(item);
+                return (
+                  <ListItem
+                    key={item.header ? `header-${index}` : item.id}
+                    itemDivider={item.header}
+                  >
+                    {item.header
+                      ? renderPropertyListHeader(item.name)
+                      : renderPropertyCardInList(item, underInspection)}
+                  </ListItem>
+                );
+              }}
             />
-            <Container>
-              <List
-                dataArray={sortedOwnedProperties}
-                stickyHeaderIndices={stickyHeaderIndices}
-                renderItem={listingItem => {
-                  const { item } = listingItem;
-                  const underInspection = porpertyIsUnderInspection(item);
-                  return (
-                    <ListItem key={item.id} itemDivider={item.header}>
-                      {item.header
-                        ? renderPropertyListHeader(item.name)
-                        : renderPropertyCardInList(item, underInspection)}
-                    </ListItem>
-                  );
-                }}
-              />
-            </Container>
-          </Container>
-        );
-      }}
-    </Query>
+          );
+        }}
+      </Query>
+    </Container>
   );
 }

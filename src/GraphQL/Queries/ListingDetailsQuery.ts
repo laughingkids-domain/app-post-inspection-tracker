@@ -1,20 +1,23 @@
-const userDetailsQuery = (ids: string[]) => `
-query listingDetailsQuery {
-  listings(ids: ${ids}) {
-      id
-      bathrooms
-      carspaces
-      bedrooms
-      addressParts {
-        displayAddress
-      }
-      inspectionDetails {
-        inspections {
-         	openingDateTime
-          closingDateTime
+const listingDetailsQuery = (ids: string[]) => {
+  const idInQuery = ids.join(",");
+  const query = `query listingDetailsQuery {
+    listings(ids: [${idInQuery}]) {
+        id
+        bathrooms
+        carspaces
+        bedrooms
+        addressParts {
+          displayAddress
         }
-      }
-  }
-}`;
+        inspectionDetails {
+          inspections {
+            openingDateTime
+            closingDateTime
+          }
+        }
+    }
+  }`;
+  return query;
+};
 
-export default userDetailsQuery;
+export default listingDetailsQuery;

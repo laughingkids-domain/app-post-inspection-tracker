@@ -5,7 +5,7 @@ import { createPersistedQueryLink } from "apollo-link-persisted-queries";
 import { onError } from "apollo-link-error";
 import { InMemoryCache } from "apollo-cache-inmemory";
 
-export function getApolloClient(uri: string) {
+export function getApolloClient(uri: string, apiKey?: string) {
   const cache = new InMemoryCache();
   const link = ApolloLink.from([
     onError(({ graphQLErrors, networkError }) => {
@@ -24,7 +24,10 @@ export function getApolloClient(uri: string) {
     }),
     createPersistedQueryLink({ useGETForHashedQueries: true }).concat(
       createHttpLink({
-        uri
+        uri,
+        headers: {
+          "X-API-KEY": "da2-ciovdwvuvjbr7lrdqxwybvd3he" || apiKey
+        }
       })
     )
   ]);
