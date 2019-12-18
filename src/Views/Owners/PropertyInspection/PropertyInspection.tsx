@@ -2,7 +2,7 @@ import React from "react";
 import { Container } from "native-base";
 import Header from "../../../Components/Header/Header";
 
-export default function InspectionMode() {
+export default function PropertyInspection() {
   return (
     <Container>
       <Header title={"Owners"} subtitle={"Inspection Mode"} />
