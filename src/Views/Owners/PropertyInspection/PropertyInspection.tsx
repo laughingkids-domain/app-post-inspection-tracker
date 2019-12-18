@@ -10,7 +10,8 @@ import {
   Right,
   Button,
   Icon,
-  Content
+  Content,
+  Badge
 } from "native-base";
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
@@ -24,7 +25,7 @@ import {
 } from "react-router-native";
 import { StyleSheet } from "react-native";
 import { IListingDetail } from "../../../Components/PropertyCard/PropertyCard";
-import { AirbnbRating } from "react-native-ratings";
+import { AirbnbRating, Rating } from "react-native-ratings";
 
 export interface Area {
   id: string;
@@ -34,8 +35,26 @@ export interface Area {
   label: string;
 }
 
+interface Feedback {
+  id: string;
+  aspect: string;
+  room: string;
+  rating: number;
+  comment?: string;
+  createAt?: string;
+  home?: string;
+}
+
 const ratingCompleted = rating => {
   console.log("Rating is: " + rating);
+};
+
+const ratingAspect = {
+  bedroom: ["Space", "Lighting", "Storage", "Cleaning"],
+  bathroom: ["Space", "Entrance", "Sanitation"],
+  kitchen: ["Gas", "Oven", "Cleaning"],
+  livingroom: ["Space", "Entertainment"],
+  carspace: ["Accessibility", "Position", "Storage"]
 };
 
 interface IPropertyInspectionProps extends RouteComponentProps {}
@@ -46,6 +65,9 @@ function PropertyInspection(props: IPropertyInspectionProps) {
   const [checkedIn, setCheckedIn] = React.useState([] as number[]);
   const [currentArea, setCurrentArea] = React.useState({} as Area);
   const [address, setAddress] = React.useState("");
+  const [feedback, setFeedback] = React.useState([] as Feedback[]);
+  const [reviewedAreas, setReviewedAreas] = React.useState([]);
+  const [currentAspect, setCurrentAspect] = React.useState("");
 
   const setBuyersHandler = (): void => {
     const userIds = [2, 3, 4, 5, 6];
@@ -62,8 +84,48 @@ function PropertyInspection(props: IPropertyInspectionProps) {
     }
   };
 
+  const isReviewed = id => {
+    return (
+      reviewedAreas &&
+      reviewedAreas.length !== 0 &&
+      reviewedAreas.findIndex(area => area === id) >= 0
+    );
+  };
+
   const checkinCallBack = user => {
     setCheckedIn([...checkedIn, user.userId]);
+  };
+
+  const getCurrentAspect = (id, type) => {
+    const areaFeedback = feedback.filter(fb => fb.id === id);
+    const aspects = ratingAspect[type];
+    if (
+      areaFeedback.length === aspects.length &&
+      reviewedAreas.findIndex(area => area === id) < 0
+    ) {
+      setReviewedAreas([...reviewedAreas, id]);
+      return;
+    }
+    setCurrentAspect(aspects[areaFeedback.length]);
+    return aspects[areaFeedback.length];
+  };
+
+  const setFeedbackCallBack = rating => {
+    const { label: room, listing: home, id, type } = currentArea;
+    const aspect = getCurrentAspect(id, type);
+    const newFeedback = {
+      id,
+      room,
+      home,
+      rating,
+      aspect,
+      createAt: new Date().toLocaleString()
+    };
+    if (aspect) {
+      setFeedback([...feedback, newFeedback]);
+    } else {
+      getCurrentAspect(id, type);
+    }
   };
 
   const renderCheckinMode = () => {
@@ -168,17 +230,20 @@ function PropertyInspection(props: IPropertyInspectionProps) {
       if (typeof areas === "undefined" || areas.length === 0) {
         return null;
       }
-      return areas.map((area, index) => (
-        <Button
-          style={styles.areaButton}
-          key={area.id}
-          onPress={() => setCurrentArea(area)}
-          disabled={area.id === currentArea.id}
-        >
-          <Icon name={area.icon} />
-          <Text>{area.label || `Area ${index}`}</Text>
-        </Button>
-      ));
+      return areas.map(
+        (area, index) =>
+          !isReviewed(area.id) && (
+            <Button
+              style={styles.areaButton}
+              key={area.id}
+              onPress={() => setCurrentArea(area)}
+              disabled={area.id === currentArea.id}
+            >
+              <Icon name={area.icon} />
+              <Text>{area.label || `Area ${index}`}</Text>
+            </Button>
+          )
+      );
     };
     return (
       <Content style={styles.floorPlan}>
@@ -189,6 +254,9 @@ function PropertyInspection(props: IPropertyInspectionProps) {
         {renderAreas(livingRoomAreas)}
       </Content>
     );
+  };
+  const isAllReviewed = (bathrooms, bedrooms, carspaces) => {
+    return bathrooms + bedrooms + carspaces === reviewedAreas.length + 3;
   };
 
   const renderInspectionMode = () => {
@@ -208,30 +276,51 @@ function PropertyInspection(props: IPropertyInspectionProps) {
           {({ loading, error, data }) => {
             if (loading || error) return null;
             const listing = data.listings[0] as IListingDetail;
+            const { bathrooms, bedrooms, carspaces, id } = listing;
+            const averageRating = isAllReviewed(bathrooms, bedrooms, carspaces)
+              ? 8.8
+              : 0;
             setAddress(listing.addressParts.displayAddress);
+            if (currentArea.id !== undefined) {
+              setCurrentAspect(ratingAspect[currentArea.type][0]);
+            }
             return (
               listing && (
                 <Container style={styles.content}>
-                  <AirbnbRating
-                    count={10}
-                    reviews={[
-                      "Terrible",
-                      "Bad",
-                      "Meh",
-                      "OK",
-                      "Good",
-                      "Very Good",
-                      "Wow",
-                      "Amazing",
-                      "Unbelievable",
-                      "Jesus"
-                    ]}
-                    defaultRating={5}
-                    onFinishRating={ratingCompleted}
-                    size={20}
-                  />
-                  {renderFloorPlan(
-                    ({ bathrooms, bedrooms, carspaces, id } = listing)
+                  {currentArea.id !== undefined && averageRating === 0 && (
+                    <>
+                      <Text>Rate for {currentAspect}</Text>
+                      <AirbnbRating
+                        count={10}
+                        reviews={[
+                          "Terrible",
+                          "Bad",
+                          "Meh",
+                          "OK",
+                          "Good",
+                          "Very Good",
+                          "Wow",
+                          "Amazing",
+                          "Unbelievable",
+                          "Jesus"
+                        ]}
+                        defaultRating={5}
+                        onFinishRating={setFeedbackCallBack}
+                        size={20}
+                      />
+                    </>
+                  )}
+                  {averageRating === 0 ? (
+                    renderFloorPlan({ bathrooms, bedrooms, carspaces, id })
+                  ) : (
+                    <Rating
+                      type={"heart"}
+                      ratingCount={10}
+                      imageSize={10}
+                      showRating
+                      startingValue={averageRating}
+                      readonly
+                    />
                   )}
                 </Container>
               )

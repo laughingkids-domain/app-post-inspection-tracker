@@ -21,8 +21,8 @@ export function Footer(props: IFooterProps) {
   return (
     <BaseFooter>
       <FooterTab>
-        <Button vertical active={isActiveFooterTab(location, "/")}>
-          <Link to={`/`} underlayColor="transparent">
+        <Button vertical active={isActiveFooterTab(location, "/search")}>
+          <Link to={`/search`} underlayColor="transparent">
             <Body>
               <Icon name="search" />
               <Text style={[s.text]}>Search</Text>
@@ -46,8 +46,8 @@ export function Footer(props: IFooterProps) {
             </Body>
           </Link>
         </Button>
-        <Button vertical active={isActiveFooterTab(location, "/owners")}>
-          <Link to={`/owners`} underlayColor="transparent">
+        <Button vertical active={isActiveFooterTab(location, "/")}>
+          <Link to={`/`} underlayColor="transparent">
             <Body>
               <Icon active name="home" />
               <Text style={[s.text]}>Owners</Text>

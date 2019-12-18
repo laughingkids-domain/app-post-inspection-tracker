@@ -1,5 +1,6 @@
 import React from "react";
 import { Text, Content, Left, Thumbnail, Body, Right } from "native-base";
+import { AirbnbRating, Rating } from "react-native-ratings";
 
 interface Address {
   stateAbbreviation: string;
@@ -27,6 +28,7 @@ export interface IListingDetail {
     inspections?: Inspection[];
     pastInspections?: Inspection[];
   };
+  averageRating?: number;
 }
 export interface PropertyCardExtend {
   underInspection?: boolean;
@@ -39,7 +41,13 @@ export interface IPropertyCardProps {
 
 export default function PropertyCard(props: IPropertyCardProps) {
   const { listing } = props;
-  const { bathrooms, bedrooms, carspaces, addressParts } = listing;
+  const {
+    bathrooms,
+    bedrooms,
+    carspaces,
+    addressParts,
+    averageRating
+  } = listing;
   const nextInspection = listing.inspectionDetails.inspections.find(
     inspection => {
       const today = new Date("2019-12-28T01:10:00.000Z");
@@ -48,7 +56,6 @@ export default function PropertyCard(props: IPropertyCardProps) {
       return today <= inspectionEnd && today >= inspectionStart;
     }
   );
-  const highlight = `bedrooms:${bedrooms}, bathrooms:${bathrooms}, carspaces:${carspaces}`;
   const finishAt = nextInspection && new Date(nextInspection.closingDateTime);
   const thumbnail = listing.media.filter(media => media.type === "photo");
   const {
@@ -61,7 +68,9 @@ export default function PropertyCard(props: IPropertyCardProps) {
   return (
     <>
       <Left>
-        <Thumbnail square source={{ uri: thumbnail[0].url }} />
+        {!averageRating && (
+          <Thumbnail square large source={{ uri: thumbnail[0].url }} />
+        )}
       </Left>
       <Body>
         <Text>
@@ -79,7 +88,18 @@ export default function PropertyCard(props: IPropertyCardProps) {
           </>
         )}
       </Body>
-      <Right />
+      <Right>
+        {averageRating && (
+          <Rating
+            type={"heart"}
+            ratingCount={10}
+            imageSize={10}
+            showRating
+            startingValue={averageRating || 8.5}
+            readonly
+          />
+        )}
+      </Right>
     </>
   );
 }

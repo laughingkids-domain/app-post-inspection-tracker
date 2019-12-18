@@ -23,7 +23,7 @@ const porpertyIsUnderInspection = listing => {
   }
   const nextInspection = listing.inspectionDetails.inspections.findIndex(
     inspection => {
-      const today = new Date();
+      const today = new Date("2019-12-19T03:10:00.000Z");
       const inspectionStart = new Date(inspection.openingDateTime);
       const inspectionEnd = new Date(inspection.closingDateTime);
       return today <= inspectionEnd && today >= inspectionStart;

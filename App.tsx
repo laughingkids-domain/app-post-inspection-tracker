@@ -21,10 +21,10 @@ export default function App() {
     <ApolloProvider client={client}>
       <NativeRouter>
         <Container>
-          <Route exact path="/" component={SearchHomePage} />
+          <Route exact path="/search" component={SearchHomePage} />
           <Route exact path="/shortlist" component={ShortlistHomePage} />
           <Route exact path="/saved" component={SavedHomePage} />
-          <Route exact path="/owners" component={OwnersHomePage} />
+          <Route exact path="/" component={OwnersHomePage} />
           <Route
             exact
             path="/owners/property/inspection/:listingId"
