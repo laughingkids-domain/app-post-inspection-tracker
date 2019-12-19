@@ -57,6 +57,7 @@ export default function PropertyCard(props: IPropertyCardProps) {
     }
   );
   const finishAt = nextInspection && new Date(nextInspection.closingDateTime);
+
   const thumbnail = listing.media.filter(media => media.type === "photo");
   const {
     streetNumber,
@@ -79,7 +80,7 @@ export default function PropertyCard(props: IPropertyCardProps) {
         <Text>
           {suburb} {postcode} {stateAbbreviation.toUpperCase()}
         </Text>
-        {finishAt ? (
+        {finishAt !== undefined ? (
           <Text>Inspection will end at {finishAt.toLocaleTimeString()}</Text>
         ) : (
           <>

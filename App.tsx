@@ -14,7 +14,7 @@ import { ApolloProvider } from "@apollo/react-hooks";
 import { getApolloClient } from "./src/GraphQL/ApolloClient";
 
 // Create the client as outlined in the setup guide
-const client = getApolloClient(`http://192.168.1.8:4000/`);
+const client = getApolloClient(`http://localhost:4000/`);
 
 export default function App() {
   return (

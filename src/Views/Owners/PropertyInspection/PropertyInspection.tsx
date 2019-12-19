@@ -33,6 +33,7 @@ export interface Area {
   listing: string;
   icon: string;
   label: string;
+  areaAspects?: string[];
 }
 
 interface Feedback {
@@ -44,10 +45,6 @@ interface Feedback {
   createAt?: string;
   home?: string;
 }
-
-const ratingCompleted = rating => {
-  console.log("Rating is: " + rating);
-};
 
 const ratingAspect = {
   bedroom: ["Space", "Lighting", "Storage", "Cleaning"],
@@ -67,7 +64,7 @@ function PropertyInspection(props: IPropertyInspectionProps) {
   const [address, setAddress] = React.useState("");
   const [feedback, setFeedback] = React.useState([] as Feedback[]);
   const [reviewedAreas, setReviewedAreas] = React.useState([]);
-  const [currentAspect, setCurrentAspect] = React.useState("");
+  const [reportMode, setReportMode] = React.useState(false);
 
   const setBuyersHandler = (): void => {
     const userIds = [2, 3, 4, 5, 6];
@@ -96,35 +93,32 @@ function PropertyInspection(props: IPropertyInspectionProps) {
     setCheckedIn([...checkedIn, user.userId]);
   };
 
-  const getCurrentAspect = (id, type) => {
-    const areaFeedback = feedback.filter(fb => fb.id === id);
-    const aspects = ratingAspect[type];
-    if (
-      areaFeedback.length === aspects.length &&
-      reviewedAreas.findIndex(area => area === id) < 0
-    ) {
-      setReviewedAreas([...reviewedAreas, id]);
-      return;
-    }
-    setCurrentAspect(aspects[areaFeedback.length]);
-    return aspects[areaFeedback.length];
+  const getCurrentAspect = (id, aspects) => {
+    const areaFeedbackCount = getAreaFeedbackCount(id);
+    return aspects[areaFeedbackCount];
   };
 
+  const getAreaFeedbackCount = id => feedback.filter(fb => fb.id === id).length;
+
   const setFeedbackCallBack = rating => {
-    const { label: room, listing: home, id, type } = currentArea;
-    const aspect = getCurrentAspect(id, type);
-    const newFeedback = {
-      id,
-      room,
-      home,
-      rating,
-      aspect,
-      createAt: new Date().toLocaleString()
-    };
+    const { label: room, listing: home, id, areaAspects } = currentArea;
+    const areaFeedbackCount = getAreaFeedbackCount(id);
+    const aspect = areaAspects[areaFeedbackCount];
     if (aspect) {
+      const newFeedback = {
+        id,
+        room,
+        home,
+        rating,
+        aspect,
+        createAt: new Date().toLocaleString()
+      };
+      if (areaFeedbackCount + 1 === areaAspects.length) {
+        setReviewedAreas([...reviewedAreas, id]);
+      }
       setFeedback([...feedback, newFeedback]);
     } else {
-      getCurrentAspect(id, type);
+      setCurrentArea({} as Area);
     }
   };
 
@@ -144,16 +138,6 @@ function PropertyInspection(props: IPropertyInspectionProps) {
           {({ loading, error, data }) => {
             if (loading || error) return null;
             const { users } = data;
-            if (users.findIndex(item => item.header) < 0) {
-              users.unshift({
-                header: true,
-                label: "People on the list"
-              });
-            } else {
-              if (checkedIn.length === users.length - 1) {
-                users.pop();
-              }
-            }
 
             return (
               <Content>
@@ -178,8 +162,15 @@ function PropertyInspection(props: IPropertyInspectionProps) {
                           </Text>
                         </Body>
                         <Right>
-                          <Button onPress={() => checkinCallBack(item)}>
-                            <Icon active name="add" />
+                          <Button
+                            onPress={() => checkinCallBack(item)}
+                            disabled={
+                              checkedIn.findIndex(
+                                done => done === item.userId
+                              ) >= 0
+                            }
+                          >
+                            <Icon name="key" />
                           </Button>
                         </Right>
                       </ListItem>
@@ -206,7 +197,7 @@ function PropertyInspection(props: IPropertyInspectionProps) {
   const getAreas = (counting = 0, type, id, icon = "home"): Area[] => {
     const areas = [];
     let index = 1;
-    while (index !== counting) {
+    while (index <= counting) {
       const roomId = `${id}-${type}-${index}`;
       areas.push({
         id: roomId,
@@ -221,11 +212,11 @@ function PropertyInspection(props: IPropertyInspectionProps) {
   };
 
   const renderFloorPlan = ({ bathrooms, bedrooms, carspaces, id }) => {
-    const bathroomAreas = getAreas(bathrooms, "bathroom", id);
-    const bedroomAreas = getAreas(bedrooms, "bedroom", id);
-    const carspaceAreas = getAreas(carspaces, "carspace", id);
-    const kitchenAreas = getAreas(1, "kitchen", id);
-    const livingRoomAreas = getAreas(1, "livingroom", id);
+    const bathroomAreas = getAreas(bathrooms, "Bathroom", id, "man");
+    const bedroomAreas = getAreas(bedrooms, "Bedroom", id, "bed");
+    const carspaceAreas = getAreas(carspaces, "Carspace", id, "car");
+    const kitchenAreas = getAreas(1, "Kitchen", id, "flower");
+    const livingRoomAreas = getAreas(1, "Livingroom", id, "tv");
     const renderAreas = areas => {
       if (typeof areas === "undefined" || areas.length === 0) {
         return null;
@@ -236,7 +227,12 @@ function PropertyInspection(props: IPropertyInspectionProps) {
             <Button
               style={styles.areaButton}
               key={area.id}
-              onPress={() => setCurrentArea(area)}
+              onPress={() =>
+                setCurrentArea({
+                  ...area,
+                  areaAspects: ratingAspect[area.type.toLowerCase()]
+                })
+              }
               disabled={area.id === currentArea.id}
             >
               <Icon name={area.icon} />
@@ -255,8 +251,44 @@ function PropertyInspection(props: IPropertyInspectionProps) {
       </Content>
     );
   };
+
   const isAllReviewed = (bathrooms, bedrooms, carspaces) => {
-    return bathrooms + bedrooms + carspaces === reviewedAreas.length + 3;
+    // mock up living room and kitchen
+    return bathrooms + bedrooms + carspaces + 2 === reviewedAreas.length;
+  };
+
+  const renderRatingHead = () => {
+    let currentAspect = getCurrentAspect(
+      currentArea.id,
+      currentArea.areaAspects
+    );
+    const rateHeader = currentAspect
+      ? `Rate for ${currentAspect}`
+      : "Please select a room to contiue";
+    return (
+      <>
+        <Text>{rateHeader}</Text>
+        <AirbnbRating
+          count={10}
+          reviews={[
+            "Terrible",
+            "Bad",
+            "Meh",
+            "OK",
+            "Good",
+            "Very Good",
+            "Wow",
+            "Amazing",
+            "Unbelievable",
+            "Jesus"
+          ]}
+          isDisabled={rateHeader.length === 0}
+          defaultRating={5}
+          onFinishRating={setFeedbackCallBack}
+          size={20}
+        />
+      </>
+    );
   };
 
   const renderInspectionMode = () => {
@@ -281,46 +313,35 @@ function PropertyInspection(props: IPropertyInspectionProps) {
               ? 8.8
               : 0;
             setAddress(listing.addressParts.displayAddress);
-            if (currentArea.id !== undefined) {
-              setCurrentAspect(ratingAspect[currentArea.type][0]);
-            }
+
             return (
               listing && (
                 <Container style={styles.content}>
-                  {currentArea.id !== undefined && averageRating === 0 && (
-                    <>
-                      <Text>Rate for {currentAspect}</Text>
-                      <AirbnbRating
-                        count={10}
-                        reviews={[
-                          "Terrible",
-                          "Bad",
-                          "Meh",
-                          "OK",
-                          "Good",
-                          "Very Good",
-                          "Wow",
-                          "Amazing",
-                          "Unbelievable",
-                          "Jesus"
-                        ]}
-                        defaultRating={5}
-                        onFinishRating={setFeedbackCallBack}
-                        size={20}
-                      />
-                    </>
-                  )}
+                  {currentArea.id !== undefined &&
+                    averageRating === 0 &&
+                    renderRatingHead()}
                   {averageRating === 0 ? (
                     renderFloorPlan({ bathrooms, bedrooms, carspaces, id })
                   ) : (
-                    <Rating
-                      type={"heart"}
-                      ratingCount={10}
-                      imageSize={10}
-                      showRating
-                      startingValue={averageRating}
-                      readonly
-                    />
+                    <Content>
+                      <Text style={styles.reportButton}>
+                        Thanks for your feedback
+                      </Text>
+                      <Rating
+                        type={"heart"}
+                        ratingCount={10}
+                        imageSize={10}
+                        showRating
+                        startingValue={averageRating}
+                        readonly
+                      />
+                      <Button
+                        style={styles.reportButton}
+                        onPress={() => setReportMode(true)}
+                      >
+                        <Text>View Inspection Feedback</Text>
+                      </Button>
+                    </Content>
                   )}
                 </Container>
               )
@@ -331,7 +352,23 @@ function PropertyInspection(props: IPropertyInspectionProps) {
     );
   };
 
-  return checkinMode ? renderCheckinMode() : renderInspectionMode();
+  const renderReportMode = () => {
+    return (
+      <Container>
+        <Header title={`Inspection Report`} subtitle={address} />
+        <Text>TBC...</Text>
+      </Container>
+    );
+  };
+
+  let renderMode = renderInspectionMode;
+  if (checkinMode) {
+    renderMode = renderCheckinMode;
+  }
+  if (reportMode) {
+    renderMode = renderReportMode;
+  }
+  return renderMode();
 }
 
 export default withRouter(PropertyInspection);
@@ -362,5 +399,9 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 10,
     marginVertical: 5
+  },
+  reportButton: {
+    marginTop: 30,
+    textAlign: "center"
   }
 });
